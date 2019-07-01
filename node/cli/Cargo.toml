@@ -16,7 +16,7 @@ edgeware-service = { path = "../service" }
 edgeware-primitives = { path = "../primitives" }
 edgeware-runtime = { path = "../runtime" }
 
-parity-codec = { version = "3.3" }
+parity-codec = { version = "4.1.1" }
 sr-io = { git = "https://github.com/paritytech/substrate" }
 primitives = { package = "substrate-primitives", git = "https://github.com/paritytech/substrate" }
 inherents = { package = "substrate-inherents", git = "https://github.com/paritytech/substrate" }

@@ -130,16 +130,15 @@ pub fn run<I, T, E>(args: I, exit: E, version: cli::VersionInfo) -> error::Resul
 			info!("Roles: {:?}", config.roles);
 			let runtime = RuntimeBuilder::new().name_prefix("main-tokio-").build()
 				.map_err(|e| format!("{:?}", e))?;
-			let executor = runtime.executor();
 			match config.roles {
 				ServiceRoles::LIGHT => run_until_exit(
 					runtime,
-					service::Factory::new_light(config, executor).map_err(|e| format!("{:?}", e))?,
+					service::Factory::new_light(config).map_err(|e| format!("{:?}", e))?,
 					exit
 				),
 				_ => run_until_exit(
 					runtime,
-					service::Factory::new_full(config, executor).map_err(|e| format!("{:?}", e))?,
+					service::Factory::new_full(config).map_err(|e| format!("{:?}", e))?,
 					exit
 				),
 			}.map_err(|e| format!("{:?}", e))

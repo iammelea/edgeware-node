@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Edgeware.  If not, see <http://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
 #[cfg(feature = "std")]
 extern crate serde;
 
@@ -210,7 +208,7 @@ impl<T: Trait> Module<T> {
 			},
 		});
 
-		<VoteRecordCount<T>>::mutate(|i| *i += 1);
+		<VoteRecordCount>::mutate(|i| *i += 1);
 		Self::deposit_event(RawEvent::VoteCreated(id, sender, vote_type));
 		return Ok(id);
 	}

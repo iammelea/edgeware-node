@@ -119,8 +119,8 @@ decl_module! {
 				outcomes,
 			)?;
 
-			let index = <ProposalCount<T>>::get();
-			<ProposalCount<T>>::mutate(|i| *i += 1);
+			let index = <ProposalCount>::get();
+			<ProposalCount>::mutate(|i| *i += 1);
 			<ProposalOf<T>>::insert(hash, ProposalRecord {
 				index: index,
 				author: _sender.clone(),
