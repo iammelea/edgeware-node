@@ -112,7 +112,7 @@ pub trait Trait: system::Trait {
 
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-		fn deposit_event<T>() = default;
+		fn deposit_event() = default;
 
 		/// A function for commit-reveal voting schemes that adds a vote commitment.
 		///
@@ -188,14 +188,6 @@ decl_module! {
 			<VoteRecords<T>>::insert(id, record);
 			Self::deposit_event(RawEvent::VoteRevealed(id, _sender, vote));
 			Ok(())
-		}
-
-		/// A function to advance the vote stage.
-		pub fn advance_stage_as_initiator(origin, vote_id: u64) -> Result {
-			let _sender = ensure_signed(origin)?;
-			let record = <VoteRecords<T>>::get(vote_id).ok_or("Vote record does not exist")?;
-			ensure!(record.data.initiator == _sender, "Invalid advance attempt by non-owner");
-			return Self::advance_stage(vote_id);
 		}
 	}
 }
@@ -277,6 +269,10 @@ impl<T: Trait> Module<T> {
 		}
 
 		true
+	}
+
+	pub fn get_vote_record(vote_id: u64) -> Option<VoteRecord<T::AccountId>> {
+		return <VoteRecords<T>>::get(vote_id);
 	}
 }
 

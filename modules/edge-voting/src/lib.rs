@@ -85,6 +85,7 @@ mod tests {
 
 	impl system::Trait for Test {
 		type Origin = Origin;
+		type Call = ();
 		type Index = u64;
 		type BlockNumber = u64;
 		type Hash = H256;
@@ -98,6 +99,7 @@ mod tests {
 		type MaximumBlockWeight = MaximumBlockWeight;
 		type MaximumBlockLength = MaximumBlockLength;
 		type AvailableBlockRatio = AvailableBlockRatio;
+		type Version = ();
 	}
 
 	impl Trait for Test {
@@ -110,7 +112,7 @@ mod tests {
 	// This function basically just builds a genesis storage key/value store according to
 	// our desired mockup.
 	fn new_test_ext() -> sr_io::TestExternalities<Blake2Hasher> {
-		let t = system::GenesisConfig::default().build_storage::<Test>().unwrap().0;
+		let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 		// We use default for brevity, but you can configure as desired if needed.
 		t.into()
 	}
@@ -137,8 +139,8 @@ mod tests {
 		Voting::reveal(Origin::signed(who), vote_id, vote, secret)
 	}
 
-	fn advance_stage_as_initiator(who: u64, vote_id: u64) -> Result {
-		Voting::advance_stage_as_initiator(Origin::signed(who), vote_id)
+	fn advance_stage(vote_id: u64) -> Result {
+		Voting::advance_stage(vote_id)
 	}
 
 	fn get_test_key() -> u64 {
@@ -367,25 +369,13 @@ mod tests {
 	}
 
 	#[test]
-	fn advance_from_non_initiator_should_not_work() {
-		with_externalities(&mut new_test_ext(), || {
-			System::set_block_number(1);
-			let public = get_test_key();
-			let public2 = get_test_key_2();
-			let vote = generate_1p1v_public_binary_vote();
-			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_err!(advance_stage_as_initiator(public2, 1), "Invalid advance attempt by non-owner");
-		});
-	}
-
-	#[test]
 	fn advance_from_initiator_should_work() {
 		with_externalities(&mut new_test_ext(), || {
 			System::set_block_number(1);
 			let public = get_test_key();
 			let vote = generate_1p1v_public_binary_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_eq!(
 				Voting::vote_records(1),
 				Some(make_record(1, public, vote.0, vote.1, vote.2, &vote.3, VoteStage::Voting))
@@ -412,7 +402,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_public_binary_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			let public2 = get_test_key_2();
 			assert_ok!(reveal(public2, 1, vec![vote.3[0]], Some(vote.3[0])));
 			assert_eq!(
@@ -446,7 +436,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_public_binary_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			let public2 = get_test_key_2();
 			let invalid_outcome = SECRET;
 			assert_err!(reveal(public2, 1, vec![invalid_outcome], None), "Vote outcome is not valid");
@@ -460,7 +450,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_public_multi_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 
 			
 			for i in 0..vote.3.len() {
@@ -476,10 +466,10 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_public_binary_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			let public2 = get_test_key_2();
 			assert_ok!(reveal(public2, 1, vec![vote.3[0]], Some(vote.3[0])));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_eq!(
 				Voting::vote_records(1).unwrap().data.stage,
 				VoteStage::Completed
@@ -520,7 +510,7 @@ mod tests {
 				Voting::vote_records(1).unwrap().data.is_commit_reveal,
 				true
 			);
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_eq!(
 				Voting::vote_records(1).unwrap().data.stage,
 				VoteStage::Commit
@@ -563,7 +553,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_commit_reveal_binary_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			let public2 = get_test_key_2();
 			let secret = SECRET;
 			let mut buf = Vec::new();
@@ -588,7 +578,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_commit_reveal_binary_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			let public2 = get_test_key_2();
 			let secret = SECRET;
 			let mut buf = Vec::new();
@@ -602,7 +592,7 @@ mod tests {
 				vec![(public2, commit_hash)]
 			);
 
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_ok!(reveal(public2, 1, vec![vote.3[0]], Some(secret)));
 			assert_eq!(System::events(), vec![
 				EventRecord {
@@ -647,7 +637,7 @@ mod tests {
 				Some(make_record(1, public, vote.0, vote.1, vote.2, &vote.3, VoteStage::PreVoting))
 			);
 
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_eq!(
 				Voting::vote_records(1),
 				Some(make_record(1, public, vote.0, vote.1, vote.2, &vote.3, VoteStage::Voting))
@@ -662,7 +652,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_public_ranked_choice_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_ok!(reveal(public, 1, vote.3.to_vec(), None));
 			assert_eq!(System::events(), vec![
 				EventRecord {
@@ -691,7 +681,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_public_ranked_choice_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_err!(reveal(public, 1, vec![vote.3[0]], None), "Ranked choice vote invalid");
 		});
 	}
@@ -703,7 +693,7 @@ mod tests {
 			let public = get_test_key();
 			let vote = generate_1p1v_commit_reveal_ranked_choice_vote();
 			assert_eq!(Ok(1), create_vote(public, vote.0, vote.1, vote.2, &vote.3));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 
 			let mut buf = vec![];
 			buf.extend_from_slice(&public.encode());
@@ -713,7 +703,7 @@ mod tests {
 			}
 			let hash = BlakeTwo256::hash_of(&buf);
 			assert_ok!(commit(public, 1, hash.into()));
-			assert_ok!(advance_stage_as_initiator(public, 1));
+			assert_ok!(advance_stage(1));
 			assert_ok!(reveal(public, 1, vote.3.to_vec(), Some(SECRET)));
 			assert_eq!(System::events(), vec![
 				EventRecord {
